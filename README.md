@@ -78,7 +78,7 @@ npm run dev
 The system includes two admin accounts:
 
 1. Google Sign-in:
-   - Email: gururajbg4@gmail.com
+   - Email: <your email add in code>
 
 2. Email/Password:
    - Email: admin@example.com
@@ -92,9 +92,7 @@ The system includes two admin accounts:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
