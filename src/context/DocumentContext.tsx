@@ -1,61 +1,129 @@
-
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { Document } from "../types";
+import { openDB, DBSchema } from 'idb';
 
 interface DocumentContextType {
   documents: Document[];
-  addDocument: (document: Document) => void;
+  addDocument: (document: Document, file: File) => void;
   removeDocument: (id: string) => void;
+  getDocumentUrl: (id: string) => Promise<string | null>;
+}
+
+interface DocumentDB extends DBSchema {
+  documents: {
+    key: string;
+    value: {
+      id: string;
+      title: string;
+      description: string;
+      category: "e-waste" | "battery";
+      dateAdded: Date;
+      file: File;
+    };
+  };
 }
 
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
 
 export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [documents, setDocuments] = useState<Document[]>([
-    {
-      id: "1",
-      title: "E-Waste Management Guidelines",
-      category: "e-waste",
-      fileUrl: "/sample/e-waste-guidelines.pdf",
-      description: "Official guidelines for managing electronic waste",
-      dateAdded: new Date("2023-01-15")
-    },
-    {
-      id: "2",
-      title: "Computer Recycling Procedure",
-      category: "e-waste",
-      fileUrl: "/sample/computer-recycling.pdf",
-      description: "Standard procedure for recycling computer equipment",
-      dateAdded: new Date("2023-02-20")
-    },
-    {
-      id: "3",
-      title: "Battery Disposal Regulations",
-      category: "battery",
-      fileUrl: "/sample/battery-disposal.pdf",
-      description: "Latest regulations for disposing batteries",
-      dateAdded: new Date("2023-03-10")
-    },
-    {
-      id: "4",
-      title: "Lithium Battery Handling Manual",
-      category: "battery",
-      fileUrl: "/sample/lithium-battery-manual.pdf",
-      description: "Safety procedures for handling lithium batteries",
-      dateAdded: new Date("2023-04-05")
-    }
-  ]);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [db, setDb] = useState<IDBDatabase | null>(null);
 
-  const addDocument = (document: Document) => {
-    setDocuments(prev => [...prev, document]);
+  // Initialize IndexedDB
+  useEffect(() => {
+    const initDB = async () => {
+      try {
+        const database = await openDB<DocumentDB>('documentsDB', 1, {
+          upgrade(db) {
+            if (!db.objectStoreNames.contains('documents')) {
+              db.createObjectStore('documents', { keyPath: 'id' });
+            }
+          },
+        });
+        setDb(database);
+
+        // Load document metadata from IndexedDB
+        const tx = database.transaction('documents', 'readonly');
+        const store = tx.objectStore('documents');
+        const allDocs = await store.getAll();
+        setDocuments(allDocs.map(doc => ({
+          ...doc,
+          fileUrl: URL.createObjectURL(doc.file)
+        })));
+      } catch (error) {
+        console.error('Error initializing IndexedDB:', error);
+      }
+    };
+
+    initDB();
+  }, []);
+
+  const addDocument = async (document: Document, file: File) => {
+    if (!db) return;
+
+    try {
+      const tx = db.transaction('documents', 'readwrite');
+      const store = tx.objectStore('documents');
+      
+      // Store the file in IndexedDB
+      await store.put({
+        ...document,
+        file
+      });
+
+      // Update the documents state with the new document
+      setDocuments(prev => [...prev, {
+        ...document,
+        fileUrl: URL.createObjectURL(file)
+      }]);
+    } catch (error) {
+      console.error('Error adding document:', error);
+    }
   };
 
-  const removeDocument = (id: string) => {
-    setDocuments(prev => prev.filter(doc => doc.id !== id));
+  const removeDocument = async (id: string) => {
+    if (!db) return;
+
+    try {
+      const tx = db.transaction('documents', 'readwrite');
+      const store = tx.objectStore('documents');
+      
+      // Get the document to revoke its URL
+      const doc = await store.get(id);
+      if (doc?.fileUrl) {
+        URL.revokeObjectURL(doc.fileUrl);
+      }
+
+      // Remove from IndexedDB
+      await store.delete(id);
+
+      // Update the documents state
+      setDocuments(prev => prev.filter(doc => doc.id !== id));
+    } catch (error) {
+      console.error('Error removing document:', error);
+    }
+  };
+
+  const getDocumentUrl = async (id: string): Promise<string | null> => {
+    if (!db) return null;
+
+    try {
+      const tx = db.transaction('documents', 'readonly');
+      const store = tx.objectStore('documents');
+      const doc = await store.get(id);
+      
+      if (doc) {
+        return URL.createObjectURL(doc.file);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error getting document URL:', error);
+      return null;
+    }
   };
 
   return (
-    <DocumentContext.Provider value={{ documents, addDocument, removeDocument }}>
+    <DocumentContext.Provider value={{ documents, addDocument, removeDocument, getDocumentUrl }}>
       {children}
     </DocumentContext.Provider>
   );

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Upload, FileText, X } from "lucide-react";
 import { useDocuments } from "../context/DocumentContext";
@@ -23,29 +22,24 @@ const UploadForm: React.FC = () => {
     
     setIsSubmitting(true);
     
-    // In a real app, we would upload the file to a server
-    // Here we just simulate it with a timeout
-    setTimeout(() => {
-      const newDoc = {
-        id: Date.now().toString(),
-        title,
-        description,
-        category,
-        fileUrl: URL.createObjectURL(file), // In real app, this would be the URL from server
-        dateAdded: new Date()
-      };
-      
-      addDocument(newDoc);
-      
-      // Reset form
-      setTitle("");
-      setDescription("");
-      setCategory("e-waste");
-      setFile(null);
-      setIsSubmitting(false);
-      
-      alert("Document added successfully!");
-    }, 1000);
+    const newDoc = {
+      id: Date.now().toString(),
+      title,
+      description,
+      category,
+      dateAdded: new Date()
+    };
+    
+    addDocument(newDoc, file);
+    
+    // Reset form
+    setTitle("");
+    setDescription("");
+    setCategory("e-waste");
+    setFile(null);
+    setIsSubmitting(false);
+    
+    alert("Document added successfully!");
   };
   
   return (

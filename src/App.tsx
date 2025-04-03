@@ -1,36 +1,35 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { DocumentProvider } from './context/DocumentContext';
+import Navbar from './components/Navbar';
+import Index from './pages/Index';
+import EWasteManagement from './pages/EWasteManagement';
+import BatteryRules from './pages/BatteryRules';
+import AdminPage from './pages/AdminPage';
+import Login from './pages/Login';
+import NotFound from './pages/NotFound';
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { DocumentProvider } from "./context/DocumentContext";
-import Index from "./pages/Index";
-import EWasteManagement from "./pages/EWasteManagement";
-import BatteryRules from "./pages/BatteryRules";
-import AdminPage from "./pages/AdminPage";
-import NotFound from "./pages/NotFound";
-
-const queryClient = new QueryClient();
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <DocumentProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/e-waste" element={<EWasteManagement />} />
-            <Route path="/battery-rules" element={<BatteryRules />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </DocumentProvider>
-  </QueryClientProvider>
-);
+const App: React.FC = () => {
+  return (
+    <Router>
+      <AuthProvider>
+        <DocumentProvider>
+          <div className="min-h-screen flex flex-col">
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/e-waste" element={<EWasteManagement />} />
+              <Route path="/battery-rules" element={<BatteryRules />} />
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </DocumentProvider>
+      </AuthProvider>
+    </Router>
+  );
+};
 
 export default App;

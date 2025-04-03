@@ -1,6 +1,4 @@
-
 import React from "react";
-import Navbar from "../components/Navbar";
 import PdfCard from "../components/PdfCard";
 import { useDocuments } from "../context/DocumentContext";
 import { Recycle } from "lucide-react";
@@ -13,8 +11,6 @@ const EWasteManagement: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
       <div className="flex-grow bg-gray-50 dark:bg-eco-green-medium/10">
         <div className="eco-container">
           <div className={`flex items-center mb-8 ${slideInFromTop}`}>

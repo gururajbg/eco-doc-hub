@@ -1,34 +1,76 @@
-
-import React from "react";
-import Navbar from "../components/Navbar";
-import UploadForm from "../components/UploadForm";
-import PdfCard from "../components/PdfCard";
-import { useDocuments } from "../context/DocumentContext";
-import { Settings, Archive } from "lucide-react";
-import { fadeIn, slideInFromLeft, slideInFromRight, slideInFromTop, staggeredChildren } from "../lib/animations";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import UploadForm from '../components/UploadForm';
+import PdfCard from '../components/PdfCard';
+import { useDocuments } from '../context/DocumentContext';
+import { useAuth } from '../context/AuthContext';
+import { Settings, Archive, LogOut } from 'lucide-react';
+import { fadeIn, slideInFromLeft, slideInFromRight, slideInFromTop, staggeredChildren } from '../lib/animations';
 
 const AdminPage: React.FC = () => {
   const { documents } = useDocuments();
+  const { user, isAdmin, logout } = useAuth();
+  const navigate = useNavigate();
 
   const eWasteDocuments = documents.filter((doc) => doc.category === "e-waste");
   const batteryDocuments = documents.filter((doc) => doc.category === "battery");
   const getStaggered = staggeredChildren(fadeIn, 100, 100);
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
+
+  if (!user || !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-eco-green-dark">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-eco-green-dark dark:text-white mb-4">
+            Access Denied
+          </h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            You need to be an admin to access this page.
+          </p>
+          <button
+            onClick={() => navigate('/login')}
+            className="bg-eco-green-medium hover:bg-eco-green-dark text-white px-4 py-2 rounded-md"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
       <div className="flex-grow bg-gray-50 dark:bg-eco-green-medium/10">
         <div className="eco-container">
-          <div className={`flex items-center mb-8 ${slideInFromTop}`}>
-            <Settings className="h-10 w-10 mr-3 text-gray-700 dark:text-gray-200 animate-spin-slow" />
-            <h1 className="page-title">Admin Dashboard</h1>
+          <div className={`flex items-center justify-between mb-8 ${slideInFromTop}`}>
+            <div className="flex items-center">
+              <Settings className="h-10 w-10 mr-3 text-gray-700 dark:text-gray-200 animate-spin-slow" />
+              <h1 className="page-title">Admin Dashboard</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={handleLogout}
+                className="flex items-center text-gray-700 dark:text-gray-200 hover:text-eco-green-dark dark:hover:text-eco-green-light"
+              >
+                <LogOut className="h-5 w-5 mr-2" />
+                Logout
+              </button>
+            </div>
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            <div className={`md:col-span-1 ${slideInFromLeft}`}>
+            <div className={`md:col-span-1 space-y-8 ${slideInFromLeft}`}>
               <UploadForm />
             </div>
+            
             <div className={`md:col-span-2 ${slideInFromRight}`}>
               <div className="bg-white dark:bg-eco-green-dark rounded-lg shadow-md p-6 hover:shadow-lg transition-all duration-300">
                 <h2 className="text-xl font-semibold text-eco-green-dark dark:text-eco-green-light mb-4">
