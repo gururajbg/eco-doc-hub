@@ -78,7 +78,7 @@ npm run dev
 The system includes two admin accounts:
 
 1. Google Sign-in:
-   - Email: <your email add in code>
+   - Email: what ever email you ad into the code array.
 
 2. Email/Password:
    - Email: admin@example.com
