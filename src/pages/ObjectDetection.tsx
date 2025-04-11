@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import { Camera, Upload, Maximize, X, Save, RefreshCw } from "lucide-react";
 import { pipeline } from "@huggingface/transformers";
@@ -47,7 +48,7 @@ const ObjectDetection: React.FC = () => {
           modelId,
           { 
             device: "cpu",
-            quantized: modelSource === "custom" ? false : true,
+            // Remove the quantized property as it doesn't exist in PretrainedModelOptions
           }
         );
         
