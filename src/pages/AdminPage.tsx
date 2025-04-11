@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import UploadForm from '../components/UploadForm';
 import PdfCard from '../components/PdfCard';
 import { useDocuments } from '../context/DocumentContext';
 import { useAuth } from '../context/AuthContext';
-import { Settings, Archive, LogOut } from 'lucide-react';
+import { Settings, Archive, LogOut, Camera } from 'lucide-react';
 import { fadeIn, slideInFromLeft, slideInFromRight, slideInFromTop, staggeredChildren } from '../lib/animations';
 
 const AdminPage: React.FC = () => {
@@ -56,6 +57,13 @@ const AdminPage: React.FC = () => {
               <h1 className="page-title">Admin Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={() => navigate('/object-detection')}
+                className="flex items-center text-gray-700 bg-eco-green-light/20 px-3 py-2 rounded-md dark:text-white hover:bg-eco-green-light/30 transition-colors"
+              >
+                <Camera className="h-5 w-5 mr-2" />
+                E-Waste Object Detection
+              </button>
               <button
                 onClick={handleLogout}
                 className="flex items-center text-gray-700 dark:text-gray-200 hover:text-eco-green-dark dark:hover:text-eco-green-light"

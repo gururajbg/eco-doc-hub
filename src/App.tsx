@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -7,6 +8,7 @@ import Index from './pages/Index';
 import EWasteManagement from './pages/EWasteManagement';
 import BatteryRules from './pages/BatteryRules';
 import AdminPage from './pages/AdminPage';
+import ObjectDetection from './pages/ObjectDetection';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 
@@ -22,6 +24,7 @@ const App: React.FC = () => {
               <Route path="/e-waste" element={<EWasteManagement />} />
               <Route path="/battery-rules" element={<BatteryRules />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/object-detection" element={<ObjectDetection />} />
               <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
