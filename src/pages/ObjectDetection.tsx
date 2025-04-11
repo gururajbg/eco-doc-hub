@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Camera, Upload, Maximize, X, Save, RefreshCw } from "lucide-react";
 import { pipeline } from "@huggingface/transformers";
-import { DetectedObject } from "../types";
+import { DetectedObject, DetectionResult } from "../types";
 
 const ObjectDetection: React.FC = () => {
   const [mode, setMode] = useState<"webcam" | "upload" | null>(null);
@@ -10,6 +10,7 @@ const ObjectDetection: React.FC = () => {
   const [detectedObjects, setDetectedObjects] = useState<DetectedObject[]>([]);
   const [detector, setDetector] = useState<any>(null);
   const [isModelLoading, setIsModelLoading] = useState(false);
+  const [modelSource, setModelSource] = useState<"default" | "custom">("default");
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -18,15 +19,30 @@ const ObjectDetection: React.FC = () => {
     const loadModel = async () => {
       try {
         setIsModelLoading(true);
+        
+        let modelId = "Xenova/yolos-tiny";
+        
+        if (modelSource === "custom") {
+          modelId = "/models/best_web_model";
+        }
+        
+        console.log("Loading model from:", modelId);
+        
         const objectDetector = await pipeline(
           "object-detection", 
-          "Xenova/yolos-tiny",
+          modelId,
           { device: "cpu" }
         );
+        
         setDetector(objectDetector);
         console.log("Object detection model loaded successfully");
       } catch (error) {
         console.error("Error loading object detection model:", error);
+        alert("Failed to load the detection model. Falling back to default model.");
+        
+        if (modelSource === "custom") {
+          setModelSource("default");
+        }
       } finally {
         setIsModelLoading(false);
       }
@@ -39,7 +55,11 @@ const ObjectDetection: React.FC = () => {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [modelSource]);
+
+  const toggleModelSource = () => {
+    setModelSource(prev => prev === "default" ? "custom" : "default");
+  };
 
   const startWebcam = async () => {
     try {
@@ -252,6 +272,41 @@ const ObjectDetection: React.FC = () => {
             </div>
           ) : (
             <>
+              <div className="mb-4 animate-in fade-in slide-in-from-bottom duration-500">
+                <div className="bg-white dark:bg-eco-green-dark/90 rounded-lg shadow-md p-4">
+                  <h3 className="text-lg font-medium text-eco-green-dark dark:text-white mb-2">
+                    Model Selection
+                  </h3>
+                  <div className="flex items-center">
+                    <button
+                      onClick={toggleModelSource}
+                      className={`px-4 py-2 rounded-md transition-colors ${
+                        modelSource === "default" 
+                          ? "bg-eco-green-medium text-white" 
+                          : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white"
+                      }`}
+                    >
+                      Default Model
+                    </button>
+                    <button
+                      onClick={toggleModelSource}
+                      className={`ml-3 px-4 py-2 rounded-md transition-colors ${
+                        modelSource === "custom" 
+                          ? "bg-eco-blue-dark text-white" 
+                          : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-white"
+                      }`}
+                    >
+                      Custom Model (best.pt)
+                    </button>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    {modelSource === "default" 
+                      ? "Using pre-trained Hugging Face model for general object detection." 
+                      : "Using your custom-trained model for e-waste detection. Make sure you've placed your model in public/models/best_web_model/"}
+                  </p>
+                </div>
+              </div>
+
               {!mode && (
                 <div className="grid md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom duration-500">
                   <div 
