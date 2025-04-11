@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { Camera, Upload, Maximize, X, Save, RefreshCw } from "lucide-react";
 import { pipeline } from "@huggingface/transformers";
 import { DetectedObject, DetectionResult } from "../types";
+import { useToast } from "@/hooks/use-toast";
 
 const ObjectDetection: React.FC = () => {
+  const { toast } = useToast();
   const [mode, setMode] = useState<"webcam" | "upload" | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
@@ -11,6 +13,7 @@ const ObjectDetection: React.FC = () => {
   const [detector, setDetector] = useState<any>(null);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const [modelSource, setModelSource] = useState<"default" | "custom">("default");
+  const [modelVersion, setModelVersion] = useState<string>("YOLOv12");
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -24,24 +27,54 @@ const ObjectDetection: React.FC = () => {
         
         if (modelSource === "custom") {
           modelId = "/models/best_web_model";
+          console.log("Loading YOLOv12 model from local path:", modelId);
+          toast({
+            title: "Loading YOLOv12 Model",
+            description: "Initializing your custom YOLOv12 model. This may take a moment.",
+            duration: 5000,
+          });
+        } else {
+          console.log("Loading default model from:", modelId);
+          toast({
+            title: "Loading Default Model",
+            description: "Initializing the default detection model.",
+            duration: 3000,
+          });
         }
-        
-        console.log("Loading model from:", modelId);
         
         const objectDetector = await pipeline(
           "object-detection", 
           modelId,
-          { device: "cpu" }
+          { 
+            device: "cpu",
+            quantized: modelSource === "custom" ? false : true,
+          }
         );
         
         setDetector(objectDetector);
         console.log("Object detection model loaded successfully");
+        
+        toast({
+          title: "Model Loaded Successfully",
+          description: modelSource === "custom" 
+            ? "Your YOLOv12 model is ready to use" 
+            : "Default detection model is ready",
+          duration: 3000,
+        });
       } catch (error) {
         console.error("Error loading object detection model:", error);
-        alert("Failed to load the detection model. Falling back to default model.");
+        
+        toast({
+          title: "Model Loading Failed",
+          description: "Could not load the detection model. Falling back to default.",
+          variant: "destructive",
+          duration: 5000,
+        });
         
         if (modelSource === "custom") {
           setModelSource("default");
+          // Try loading the default model
+          loadModel();
         }
       } finally {
         setIsModelLoading(false);
@@ -55,7 +88,7 @@ const ObjectDetection: React.FC = () => {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [modelSource]);
+  }, [modelSource, toast]);
 
   const toggleModelSource = () => {
     setModelSource(prev => prev === "default" ? "custom" : "default");
@@ -122,7 +155,12 @@ const ObjectDetection: React.FC = () => {
 
   const detectObjects = async () => {
     if (!detector) {
-      alert("Model is not loaded yet. Please wait.");
+      toast({
+        title: "Model Not Ready",
+        description: "Please wait for the model to finish loading.",
+        variant: "destructive",
+        duration: 3000,
+      });
       return;
     }
 
@@ -138,14 +176,20 @@ const ObjectDetection: React.FC = () => {
       }
       
       if (imageToProcess) {
-        const results = await detector(imageToProcess, {
-          threshold: 0.5,
-          percentage: true
-        });
+        const detectionOptions = {
+          threshold: modelSource === "custom" ? 0.25 : 0.5,
+          percentage: true,
+          segmentation: modelSource === "custom",
+          keypoints: modelSource === "custom",
+        };
+        
+        console.log("Running detection with options:", detectionOptions);
+        
+        const results = await detector(imageToProcess, detectionOptions);
         
         console.log("Detection results:", results);
         
-        setDetectedObjects(results.map((obj: any) => ({
+        const formattedResults = results.map((obj: any) => ({
           label: obj.label,
           score: obj.score,
           box: {
@@ -153,16 +197,39 @@ const ObjectDetection: React.FC = () => {
             ymin: obj.box.ymin,
             xmax: obj.box.xmax,
             ymax: obj.box.ymax
-          }
-        })));
+          },
+          ...(obj.segmentation && { segmentation: obj.segmentation }),
+          ...(obj.keypoints && { keypoints: obj.keypoints }),
+        }));
+        
+        setDetectedObjects(formattedResults);
         
         if (canvasRef.current) {
           drawBoundingBoxes(results);
         }
+        
+        if (formattedResults.length === 0) {
+          toast({
+            title: "No Objects Detected",
+            description: "Try adjusting the camera angle or using a different image.",
+            duration: 3000,
+          });
+        } else {
+          toast({
+            title: `${formattedResults.length} Object(s) Detected`,
+            description: `Using ${modelSource === "custom" ? "YOLOv12" : "default"} model`,
+            duration: 3000,
+          });
+        }
       }
     } catch (error) {
       console.error("Error detecting objects:", error);
-      alert("An error occurred during object detection. Please try again.");
+      toast({
+        title: "Detection Error",
+        description: "An error occurred during object detection. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
     } finally {
       setIsDetecting(false);
     }
@@ -197,16 +264,50 @@ const ObjectDetection: React.FC = () => {
         const width = (box.xmax - box.xmin) * canvas.width;
         const height = (box.ymax - box.ymin) * canvas.height;
         
-        ctx.strokeStyle = "#4ade80";
-        ctx.lineWidth = 2;
+        const hue = Math.floor(Math.random() * 360);
+        ctx.strokeStyle = `hsl(${hue}, 100%, 40%)`;
+        ctx.lineWidth = 3;
         ctx.strokeRect(x, y, width, height);
         
-        ctx.fillStyle = "rgba(74, 222, 128, 0.8)";
-        ctx.fillRect(x, y - 25, 150, 25);
+        const labelWidth = ctx.measureText(`${label}: ${Math.round(score * 100)}%`).width + 10;
+        ctx.fillStyle = `hsl(${hue}, 100%, 35%)`;
+        ctx.fillRect(x, y - 30, labelWidth, 30);
         
-        ctx.fillStyle = "#000";
-        ctx.font = "16px Arial";
-        ctx.fillText(`${label}: ${Math.round(score * 100)}%`, x + 5, y - 7);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 16px Arial";
+        ctx.fillText(`${label}: ${Math.round(score * 100)}%`, x + 5, y - 10);
+        
+        if (obj.segmentation && modelSource === "custom") {
+          ctx.fillStyle = `hsla(${hue}, 100%, 40%, 0.3)`;
+          ctx.beginPath();
+          
+          for (let i = 0; i < obj.segmentation.length; i++) {
+            const [x, y] = obj.segmentation[i];
+            if (i === 0) {
+              ctx.moveTo(x * canvas.width, y * canvas.height);
+            } else {
+              ctx.lineTo(x * canvas.width, y * canvas.height);
+            }
+          }
+          
+          ctx.closePath();
+          ctx.fill();
+        }
+        
+        if (obj.keypoints && modelSource === "custom") {
+          obj.keypoints.forEach((point: any) => {
+            if (point.visibility && point.visibility > 0.5) {
+              ctx.fillStyle = "#ffff00";
+              ctx.beginPath();
+              ctx.arc(
+                point.x * canvas.width, 
+                point.y * canvas.height, 
+                5, 0, 2 * Math.PI
+              );
+              ctx.fill();
+            }
+          });
+        }
       });
     }
   };

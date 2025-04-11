@@ -17,9 +17,16 @@ export interface DetectedObject {
     xmax: number;
     ymax: number;
   };
+  segmentation?: number[][]; // Optional segmentation data for YOLOv12
+  keypoints?: {x: number, y: number, visibility?: number}[]; // Optional keypoints data for YOLOv12
 }
 
 export interface DetectionResult {
   image: string; // Base64 encoded image with bounding boxes
   objects: DetectedObject[];
+  modelInfo?: {
+    name: string;
+    version: string;
+    type: string;
+  };
 }
