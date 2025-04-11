@@ -4,7 +4,7 @@ export interface Document {
   title: string;
   description: string;
   category: "e-waste" | "battery";
-  fileUrl: string;
+  fileUrl?: string; // Make fileUrl optional
   dateAdded: Date;
 }
 

@@ -1,6 +1,7 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Document } from "../types";
-import { openDB, DBSchema } from 'idb';
+import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 interface DocumentContextType {
   documents: Document[];
@@ -27,7 +28,7 @@ const DocumentContext = createContext<DocumentContextType | undefined>(undefined
 
 export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [db, setDb] = useState<IDBDatabase | null>(null);
+  const [db, setDb] = useState<IDBPDatabase<DocumentDB> | null>(null);
 
   // Initialize IndexedDB
   useEffect(() => {
@@ -40,12 +41,15 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             }
           },
         });
+        
+        // Correctly set the database
         setDb(database);
 
         // Load document metadata from IndexedDB
         const tx = database.transaction('documents', 'readonly');
         const store = tx.objectStore('documents');
         const allDocs = await store.getAll();
+        
         setDocuments(allDocs.map(doc => ({
           ...doc,
           fileUrl: URL.createObjectURL(doc.file)
@@ -90,8 +94,8 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       // Get the document to revoke its URL
       const doc = await store.get(id);
-      if (doc?.fileUrl) {
-        URL.revokeObjectURL(doc.fileUrl);
+      if (doc && doc.file) {
+        // No need to revoke URL for items we just loaded from IndexedDB
       }
 
       // Remove from IndexedDB
@@ -112,7 +116,7 @@ export const DocumentProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const store = tx.objectStore('documents');
       const doc = await store.get(id);
       
-      if (doc) {
+      if (doc && doc.file) {
         return URL.createObjectURL(doc.file);
       }
       return null;

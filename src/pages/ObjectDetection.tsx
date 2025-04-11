@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import { Camera, Upload, Maximize, X, Save, RefreshCw } from "lucide-react";
 import { pipeline } from "@huggingface/transformers";
@@ -15,16 +14,14 @@ const ObjectDetection: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
 
-  // Initialize the object detection model
   useEffect(() => {
     const loadModel = async () => {
       try {
         setIsModelLoading(true);
-        // Load the object detection model from Hugging Face
         const objectDetector = await pipeline(
           "object-detection", 
-          "Xenova/yolos-tiny", // We'll use a default model as the custom .pt file would need conversion
-          { device: window.navigator.gpu ? "webgpu" : "cpu" }
+          "Xenova/yolos-tiny",
+          { device: "cpu" }
         );
         setDetector(objectDetector);
         console.log("Object detection model loaded successfully");
@@ -37,7 +34,6 @@ const ObjectDetection: React.FC = () => {
 
     loadModel();
 
-    // Cleanup function
     return () => {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
@@ -140,7 +136,6 @@ const ObjectDetection: React.FC = () => {
           }
         })));
         
-        // Draw bounding boxes
         if (canvasRef.current) {
           drawBoundingBoxes(results);
         }
@@ -161,7 +156,6 @@ const ObjectDetection: React.FC = () => {
     
     if (!ctx) return;
     
-    // Clear previous drawings
     if (mode === "upload" && imageUrl) {
       const img = new Image();
       img.onload = () => {
@@ -183,16 +177,13 @@ const ObjectDetection: React.FC = () => {
         const width = (box.xmax - box.xmin) * canvas.width;
         const height = (box.ymax - box.ymin) * canvas.height;
         
-        // Draw rectangle
         ctx.strokeStyle = "#4ade80";
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, width, height);
         
-        // Draw label background
         ctx.fillStyle = "rgba(74, 222, 128, 0.8)";
         ctx.fillRect(x, y - 25, 150, 25);
         
-        // Draw label text
         ctx.fillStyle = "#000";
         ctx.font = "16px Arial";
         ctx.fillText(`${label}: ${Math.round(score * 100)}%`, x + 5, y - 7);
