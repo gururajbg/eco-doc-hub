@@ -50,7 +50,7 @@ const Navbar: React.FC = () => {
               <Battery className="h-4 w-4 mr-2" />
               Battery Rules
             </Link>
-
+<a
             
               href="https://ecodoc-mapper.streamlit.app/"
               target="_blank"
