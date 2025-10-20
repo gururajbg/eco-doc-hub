@@ -25,6 +25,7 @@ const App: React.FC = () => {
               <Route path="/battery-rules" element={<BatteryRules />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="/object-detection" element={<ObjectDetection />} />
+              <Route path="/address-mapper" element={<Navigate to="https://ecodoc-mapper.streamlit.app/" replace />} />
               <Route path="/login" element={<Login />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
