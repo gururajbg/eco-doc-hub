@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Recycle, Battery, User, LogOut } from 'lucide-react';
+import { Recycle, Battery, User, LogOut ,MapPin } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, isAdmin, logout } = useAuth();
@@ -47,6 +47,18 @@ const Navbar: React.FC = () => {
                   : 'text-gray-300 hover:bg-eco-green-medium hover:text-white'
               }`}
             >
+
+              <Link
+  to="/address-mapper"
+  className={`flex items-center px-3 py-2 rounded-md text-sm font-medium ${
+    location.pathname === '/address-mapper'
+      ? 'bg-eco-green-medium text-white'
+      : 'text-gray-300 hover:bg-eco-green-medium hover:text-white'
+  }`}
+>
+  <MapPin className="h-4 w-4 mr-2" />
+  Address Mapper
+</Link>
               <Battery className="h-4 w-4 mr-2" />
               Battery Rules
             </Link>
