@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Recycle, Battery, User, LogOut ,MapPin } from 'lucide-react';
+import { Recycle, Battery, User, LogOut, MapPin } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const { user, isAdmin, logout } = useAuth();
@@ -47,18 +47,19 @@ const Navbar: React.FC = () => {
                   : 'text-gray-300 hover:bg-eco-green-medium hover:text-white'
               }`}
             >
-
-href="https://ecodoc-mapper.streamlit.app/"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-eco-green-medium hover:text-white"
->
-  <MapPin className="h-4 w-4 mr-2" />
-  Address Mapper
-</a>
               <Battery className="h-4 w-4 mr-2" />
               Battery Rules
             </Link>
+
+            
+              href="https://ecodoc-mapper.streamlit.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-eco-green-medium hover:text-white"
+            >
+              <MapPin className="h-4 w-4 mr-2" />
+              Address Mapper
+            </a>
 
             {isAdmin && (
               <Link
